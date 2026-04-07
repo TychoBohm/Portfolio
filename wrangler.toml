@@ -5,3 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [build]
 command = "npm install && npm run build"
+
+[build_context]
+production = { command = "npm install && npm run build" }
+preview = { command = "npm install && npm run build" }
