@@ -2,9 +2,3 @@ name = "portofolio"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-04-03"
 compatibility_flags = ["nodejs_compat"]
-
-[observability]
-enabled = true
-
-[assets]
-not_found_handling = "single-page-application"
