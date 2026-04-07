@@ -1,17 +1,10 @@
 name = "portofolio"
-type = "javascript"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-04-03"
-
-[env.production]
-route = "example.com/*"
-zone_id = ""
+compatibility_flags = ["nodejs_compat"]
 
 [observability]
 enabled = true
 
 [assets]
 not_found_handling = "single-page-application"
-
-[compatibility_flags]
-nodejs_compat = true
