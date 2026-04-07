@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+@font-face {
+  font-family: "Geist Sans";
+  src: url("../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2")
+    format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Geist Sans";
+  src: url("../node_modules/geist/dist/fonts/geist-sans/Geist-Italic[wght].woff2")
+    format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../node_modules/geist/dist/fonts/geist-mono/GeistMono-Italic[wght].woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+@layer base {
+  html,
+  body {
+    @apply font-sans;
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      "Helvetica Neue", sans-serif;
+  }
+}
+
+::selection {
+  @apply bg-gray-300 text-gray-900;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
