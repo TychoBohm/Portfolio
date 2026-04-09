@@ -246,7 +246,7 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
     });
 
     const ctx = gsap.context(() => {
-      mobileCardRefs.current.forEach((card, cardIdx) => {
+      mobileCardRefs.current.forEach((card) => {
         if (!card) return;
 
         const image = card.querySelector<HTMLElement>(".mc-image");
