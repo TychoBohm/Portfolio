@@ -70,7 +70,7 @@ const projects: Project[] = [
     tags: ["Vite", "React", "TypeScript", "Tailwind CSS", "GSAP"],
     year: "2026",
     type: "Portfolio",
-    url: "https://tychobohm.github.io/Portfolio/",
+    url: "https://github.com/TychoBohm/Portfolio",
   },
 ];
 
