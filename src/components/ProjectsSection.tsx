@@ -82,6 +82,7 @@ const mockGradients = [
   "linear-gradient(135deg, #fd7829 0%, #ffe8d6 100%)",
   "linear-gradient(135deg, #1c1c24 0%, #0a0a0a 100%)",
 ];
+
 interface ProjectsSectionProps {
   bloomRef: React.RefObject<BloomHandle | null>;
 }
@@ -91,12 +92,16 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
   const currentRef = useRef(0);
   const panelsRef = useRef<(HTMLDivElement | null)[]>([]);
 
+  // desktop refs
   const numRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const tagsRef = useRef<HTMLDivElement>(null);
   const linkRef = useRef<HTMLAnchorElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
+
+  // mobile: one ref per card
+  const mobileCardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const getEls = () => [
     numRef.current,
@@ -115,7 +120,6 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
     );
   };
 
-  // useCallback so the ref stays stable
   const setProject = useCallback((i: number, dir: number) => {
     if (i === currentRef.current) return;
     const yOut = dir > 0 ? -28 : 28;
@@ -133,8 +137,9 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
     });
   }, []);
 
-  // entrance
+  // ── Desktop: entrance ─────────────────────────────────────────────
   useEffect(() => {
+    if (window.innerWidth < 1024) return;
     gsap.fromTo(
       getEls(),
       { y: 30, opacity: 0 },
@@ -149,8 +154,9 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
     );
   }, []);
 
-  // scroll triggers
+  // ── Desktop: scroll triggers ──────────────────────────────────────
   useEffect(() => {
+    if (window.innerWidth < 1024) return;
     const triggers = panelsRef.current.map((panel, i) => {
       if (!panel) return null;
       return ScrollTrigger.create({
@@ -164,7 +170,9 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
     return () => triggers.forEach((t) => t?.kill());
   }, [setProject]);
 
+  // ── Desktop: snap ─────────────────────────────────────────────────
   useEffect(() => {
+    if (window.innerWidth < 1024) return;
     const st = ScrollTrigger.create({
       trigger: sectionRef.current,
       start: "top top",
@@ -174,21 +182,14 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
           const segmentSize = 1 / (projects.length - 1);
           const threshold = 0.45;
           const clamped = Math.max(0, Math.min(1, value));
-
           const currentSegment = Math.min(
             Math.floor(clamped / segmentSize),
             projects.length - 2,
           );
           const segmentStart = currentSegment * segmentSize;
           const progressInSegment = (clamped - segmentStart) / segmentSize;
-
-          let snappedIndex: number;
-          if (progressInSegment > threshold) {
-            snappedIndex = currentSegment + 1;
-          } else {
-            snappedIndex = currentSegment;
-          }
-
+          let snappedIndex =
+            progressInSegment > threshold ? currentSegment + 1 : currentSegment;
           snappedIndex = Math.max(
             0,
             Math.min(projects.length - 1, snappedIndex),
@@ -203,13 +204,237 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
     return () => st.kill();
   }, []);
 
+  // ── Mobile: scroll-triggered card animations ──────────────────────
+  useEffect(() => {
+    if (window.innerWidth >= 1024) return;
+
+    // set all mobile elements invisible on mount with more complex transforms
+    mobileCardRefs.current.forEach((card) => {
+      if (!card) return;
+      gsap.set(card.querySelector(".mc-image"), {
+        opacity: 0,
+        scale: 0.88,
+        rotationZ: -1.5,
+        y: 20,
+      });
+      gsap.set(card.querySelector(".mc-num"), {
+        opacity: 0,
+        y: 28,
+        x: -12,
+      });
+      gsap.set(card.querySelector(".mc-title"), {
+        opacity: 0,
+        y: 36,
+        x: -8,
+        rotationZ: -0.8,
+      });
+      gsap.set(card.querySelector(".mc-desc"), {
+        opacity: 0,
+        y: 24,
+        x: -6,
+      });
+      gsap.set(card.querySelectorAll(".mc-tag"), {
+        opacity: 0,
+        y: 16,
+        x: -4,
+      });
+      gsap.set(card.querySelector(".mc-link"), {
+        opacity: 0,
+        y: 12,
+        x: -3,
+      });
+    });
+
+    const ctx = gsap.context(() => {
+      mobileCardRefs.current.forEach((card, cardIdx) => {
+        if (!card) return;
+
+        const image = card.querySelector<HTMLElement>(".mc-image");
+        const num = card.querySelector<HTMLElement>(".mc-num");
+        const title = card.querySelector<HTMLElement>(".mc-title");
+        const desc = card.querySelector<HTMLElement>(".mc-desc");
+        const tags = card.querySelectorAll<HTMLElement>(".mc-tag");
+        const link = card.querySelector<HTMLElement>(".mc-link");
+
+        const trigger = { trigger: card, start: "top 84%", once: true };
+
+        // gradient card: enhanced entrance with rotation + scale
+        gsap.to(image, {
+          scale: 1,
+          opacity: 1,
+          rotationZ: 0,
+          y: 0,
+          duration: 0.95,
+          ease: "back.out(1.3)",
+          scrollTrigger: trigger,
+        });
+
+        // Add subtle parallax to card image
+        gsap.to(image, {
+          y: -50,
+          ease: "none",
+          scrollTrigger: {
+            trigger: card,
+            start: "top 84%",
+            end: "bottom top",
+            scrub: 0.7,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        // number: slide in from left
+        gsap.to(num, {
+          x: 0,
+          y: 0,
+          opacity: 1,
+          duration: 0.68,
+          ease: "power2.out",
+          scrollTrigger: trigger,
+        });
+
+        // title: enhanced with rotation and stagger
+        gsap.to(title, {
+          x: 0,
+          y: 0,
+          rotationZ: 0,
+          opacity: 1,
+          duration: 0.75,
+          ease: "back.out(1.1)",
+          delay: 0.08,
+          scrollTrigger: trigger,
+        });
+
+        // description: smooth slide-in
+        gsap.to(desc, {
+          x: 0,
+          y: 0,
+          opacity: 1,
+          duration: 0.68,
+          ease: "power2.out",
+          delay: 0.22,
+          scrollTrigger: trigger,
+        });
+
+        // tags: staggered with more movement
+        gsap.to(tags, {
+          x: 0,
+          y: 0,
+          opacity: 1,
+          duration: 0.55,
+          stagger: {
+            amount: 0.18,
+            from: "start",
+            ease: "power2.inOut",
+          },
+          ease: "back.out(0.8)",
+          delay: 0.32,
+          scrollTrigger: trigger,
+        });
+
+        // link: final element with slight delay
+        gsap.to(link, {
+          x: 0,
+          y: 0,
+          opacity: 1,
+          duration: 0.55,
+          ease: "power2.out",
+          delay: 0.48,
+          scrollTrigger: trigger,
+        });
+
+        // Optional: card container background highlight
+        gsap.to(card, {
+          backgroundColor: "rgba(255, 255, 255, 0.015)",
+          duration: 0.3,
+          repeat: 1,
+          yoyo: true,
+          scrollTrigger: trigger,
+          clearProps: "backgroundColor",
+        });
+      });
+    });
+
+    return () => ctx.revert();
+  }, []);
+
   const p = projects[current];
 
   return (
     <section ref={sectionRef} className="relative bg-[#121212]">
-      <div className="flow-root">
-        {/* STICKY LEFT PANEL */}
-        <div className="sticky top-0 h-screen float-left flex flex-col justify-center px-12 w-[55%] font-mono">
+      {/* ── MOBILE layout ────────────────────────────────────────── */}
+      <div className="lg:hidden">
+        {projects.map((proj, i) => (
+          <div
+            key={proj.title}
+            ref={(el) => {
+              mobileCardRefs.current[i] = el;
+            }}
+            className="relative px-5 py-14 border-t border-[#2a2a2a]"
+          >
+            {/* gradient card */}
+            <div
+              className="mc-image relative overflow-hidden w-full aspect-[3/4] max-h-[65vw] mb-8"
+              style={{ background: mockGradients[i] }}
+            >
+              <div className="absolute inset-0 pointer-events-none bg-black/20" />
+              <div className="relative z-10 w-full h-full flex items-center justify-center font-black text-[rgba(255,255,255,0.14)] text-[2.5rem] font-mono uppercase leading-none px-4 text-center">
+                {proj.title}
+              </div>
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 25% 25%, rgba(255,255,255,0.08) 0%, transparent 55%)",
+                }}
+              />
+              <span className="absolute z-10 bottom-3 left-3 text-xs tracking-widest uppercase text-[rgba(255,255,255,0.78)] font-mono">
+                {proj.type} — {proj.year}
+              </span>
+              <span className="absolute z-10 top-3 right-3 text-xs text-[rgba(255,255,255,0.7)] font-mono uppercase">
+                0{i + 1}
+              </span>
+            </div>
+
+            {/* info */}
+            <div className="font-mono">
+              <span className="mc-num text-xs tracking-widest uppercase text-gray-300 mb-4 block">
+                {proj.number}
+              </span>
+              <h2 className="mc-title font-black leading-none mb-5 text-[#f0ede8] tracking-[-0.03em] uppercase text-2xl sm:text-3xl">
+                {proj.title}
+              </h2>
+              <p className="mc-desc text-sm mb-5 text-gray-300 leading-[1.85]">
+                {proj.desc}
+              </p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {proj.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="mc-tag text-xs tracking-widest uppercase px-3 py-1.5 border border-[#2a2a2a] text-gray-300"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <a
+                href={proj.url || "https://github.com/TychoBohm"}
+                className="mc-link inline-flex items-center gap-2 text-xs tracking-widest uppercase w-fit text-[#f0ede8] border-b border-[#f0ede8] pb-0.5 hover:opacity-40 transition-opacity duration-100"
+              >
+                View project
+                <ArrowUpRight size={13} strokeWidth={2} />
+              </a>
+            </div>
+          </div>
+        ))}
+        <div className="px-5">
+          <div className="h-px bg-[#2a2a2a]" />
+        </div>
+      </div>
+
+      {/* ── DESKTOP layout ───────────────────────────────────────── */}
+      <div className="hidden lg:block flow-root">
+        {/* sticky left panel */}
+        <div className="sticky top-0 h-screen float-left flex flex-col justify-center px-8 xl:px-12 w-[55%] font-mono">
           <div className="flex flex-col">
             <span
               ref={numRef}
@@ -219,7 +444,7 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
             </span>
             <h2
               ref={titleRef}
-              className="font-black leading-none mb-8 text-[#f0ede8] tracking-[-0.03em] uppercase text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-5xl 2xl:text-7xl 2xl:max-w-160"
+              className="font-black leading-none mb-8 text-[#f0ede8] tracking-[-0.03em] uppercase text-3xl xl:text-5xl 2xl:text-7xl 2xl:max-w-160"
             >
               {p.title}
             </h2>
@@ -259,7 +484,7 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
           </div>
         </div>
 
-        {/* RIGHT SCROLL PANELS */}
+        {/* right scroll panels */}
         <div style={{ marginLeft: "55%", width: "45%" }}>
           {projects.map((proj, i) => (
             <div
@@ -267,33 +492,26 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
               ref={(el) => {
                 panelsRef.current[i] = el;
               }}
-              className="relative flex items-center justify-center h-screen px-12"
+              className="relative flex items-center justify-center h-screen px-8 xl:px-12"
             >
-              {/* top rule op eerste panel */}
               {i === 0 && (
-                <div className="absolute top-0 left-0 right-0 px-12">
+                <div className="absolute top-0 left-0 right-0 px-8 xl:px-12">
                   <div className="h-px bg-[#2a2a2a]" />
                 </div>
               )}
-              {/* bottom rule op laatste panel */}
               {i === projects.length - 1 && (
-                <div className="absolute bottom-0 left-0 right-0 px-12">
+                <div className="absolute bottom-0 left-0 right-0 px-8 xl:px-12">
                   <div className="h-px bg-[#2a2a2a]" />
                 </div>
               )}
               <div
-                className="relative overflow-hidden w-full m-h-[70vh] max-h-[70vh] aspect-3/4"
-                style={{
-                  background: mockGradients[i],
-                }}
+                className="relative overflow-hidden w-full max-h-[70vh] aspect-3/4"
+                style={{ background: mockGradients[i] }}
               >
                 <div className="absolute inset-0 pointer-events-none bg-black/20" />
-
                 <div className="relative z-10 w-full h-full flex items-center justify-center font-black text-[rgba(255,255,255,0.14)] text-[5rem] letter-spacing-[-0.04em] font-mono uppercase">
                   {proj.title}
                 </div>
-
-                {/* light leak */}
                 <div
                   className="absolute inset-0 pointer-events-none"
                   style={{
@@ -301,11 +519,9 @@ export default function ProjectsSection({ bloomRef }: ProjectsSectionProps) {
                       "radial-gradient(ellipse at 25% 25%, rgba(255,255,255,0.08) 0%, transparent 55%)",
                   }}
                 />
-
                 <span className="absolute z-10 bottom-4 left-4 text-xs tracking-widest uppercase text-[rgba(255,255,255,0.78)] font-mono">
                   {proj.type} — {proj.year}
                 </span>
-
                 <span
                   className="absolute z-10 top-4 right-4 text-xs text-[rgba(255,255,255,0.7)] font-mono uppercase"
                   style={{ fontFamily: "'Geist Mono', monospace" }}

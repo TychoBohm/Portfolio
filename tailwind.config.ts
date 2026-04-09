@@ -12,6 +12,9 @@ export default {
         sans: ["Geist Sans", "sans-serif"],
         mono: ["Geist Mono", "monospace"],
       },
+      screens: {
+        'xs': '320px',
+      },
     },
   },
   plugins: [],
