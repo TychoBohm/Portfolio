@@ -52,7 +52,7 @@ const projects: Project[] = [
     tags: ["Vite", "React", "TypeScript", "Tailwind CSS"],
     year: "2026",
     type: "School Project",
-    url: "https://github.com/TychoBohm/Coralynn",
+    url: "https://coralynn.tychobohm.workers.dev/",
   },
   {
     number: "05 / 06",
